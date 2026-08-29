@@ -144,10 +144,20 @@
 <div class="app">
   <div class="top-links">
     <button class="top-link" data-nav="log-history">history</button>
+    <button class="top-link" data-nav="onboarding">about</button>
     <button class="top-link" data-nav="home">start over</button>
   </div>
 
   <div class="screens">
+
+    <div class="screen" id="s-onboarding">
+      <p class="eyebrow">Welcome</p>
+      <h1>A place to keep the good stuff.</h1>
+      <p class="muted">This app helps you build a record of good moments — the ones that are easy to forget on harder days. Log one when it happens, tag what kind of moment it was, and it's saved for you to come back to anytime.</p>
+      <p class="muted">Everything you write stays on this device. Nothing is sent anywhere unless you choose to share or back it up yourself.</p>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="onboarding-continue">Get started</button>
+    </div>
 
     <div class="screen active" id="s-home">
       <p class="eyebrow">Right now</p>
@@ -177,7 +187,7 @@
     <div class="screen" id="s-done">
       <div class="done-mark">&#10003;</div>
       <h1 style="text-align:center;">Kept.</h1>
-      <p class="muted" style="text-align:center;">That one's on record now — real, dated, plain. Something to come back to on the days the Alarm's louder than the evidence.</p>
+      <p class="muted" style="text-align:center;">That one's on record now — real, dated, plain. Something to come back to on the days the spiral feels louder than the evidence.</p>
       <div class="spacer"></div>
       <button class="btn btn-primary" data-nav="home">Log another</button>
     </div>
@@ -339,6 +349,16 @@ function renderHistory(){
     list.appendChild(div);
   });
 }
+
+if(!localStorage.getItem('seen-onboarding-keep')){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-onboarding').classList.add('active');
+}
+
+document.getElementById('onboarding-continue').addEventListener('click', () => {
+  localStorage.setItem('seen-onboarding-keep', 'true');
+  nav('home');
+});
 
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(() => {});
