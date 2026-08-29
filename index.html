@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>The Keep</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1B2528">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --bg: #1B2528;
+    --surface: #22302F;
+    --surface-raised: #2A3B39;
+    --line: #3A4C49;
+    --text: #EDEAE2;
+    --text-muted: #93A6A2;
+    --gold: #C9A15C;
+    --sage: #7FA98D;
+    --sage-dim: #5C8271;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0; height:100%;}
+  body{
+    background: radial-gradient(ellipse at 50% -10%, #26332F 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family:'Inter', system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px 16px;
+    line-height:1.5;
+  }
+
+  .app{
+    width:100%;
+    max-width:440px;
+    min-height:520px;
+    background: var(--surface);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:28px 24px 24px;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5);
+  }
+
+  .top-links{ display:flex; justify-content:flex-end; gap:14px; margin-bottom:14px; }
+  .top-link{
+    font-family:'Space Mono', monospace; font-size:11px; color: var(--text-muted);
+    cursor:pointer; letter-spacing:0.05em; background:none; border:none; padding:0;
+  }
+  .top-link:hover{ color: var(--text); }
+
+  .eyebrow{
+    font-family:'Space Mono', monospace; font-size:11px; letter-spacing:0.14em;
+    text-transform:uppercase; color: var(--gold); margin:0 0 6px;
+  }
+  h1{ font-family:'Fraunces', serif; font-weight:500; font-size:26px; margin:8px 0 4px; letter-spacing:-0.01em; }
+  p{ margin:0 0 14px; font-size:15px; }
+  .muted{ color: var(--text-muted); font-size:14px; }
+
+  .screens{ display:flex; flex-direction:column; flex:1; }
+  .screen{ display:none; flex-direction:column; flex:1; }
+  .screen.active{ display:flex; }
+
+  .spacer{ flex:1; }
+
+  .btn{
+    display:block; text-align:center; cursor:pointer; width:100%;
+    font-family:'Inter', sans-serif; font-weight:600; font-size:15px;
+    border-radius:12px; padding:14px 18px; border:none;
+    background: var(--surface-raised); color: var(--text);
+  }
+  .btn-primary{ background: var(--gold); color:#20180B; }
+  .btn-secondary{ background: var(--surface-raised); color: var(--text); border:1px solid var(--line); margin-top:10px; }
+
+  textarea{
+    width:100%; min-height:80px; resize:vertical;
+    background: var(--surface-raised); border:1px solid var(--line); border-radius:10px;
+    color: var(--text); font-family:'Inter', sans-serif; font-size:14px; padding:12px; margin-bottom:6px;
+  }
+  textarea:focus{ outline:none; border-color: var(--gold); }
+
+  .log-field{ margin-bottom:16px; }
+  .log-field label{ display:block; font-family:'Space Mono', monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color: var(--text-muted); margin-bottom:6px; }
+
+  .done-mark{
+    font-family:'Fraunces', serif; font-size:48px; text-align:center; color: var(--gold);
+    margin: 12px 0 4px;
+  }
+
+  .stat-row{ display:flex; gap:10px; margin-bottom:18px; }
+  .stat-card{ flex:1; background: var(--surface-raised); border-radius:12px; padding:12px; }
+  .stat-card .stat-label{ font-family:'Space Mono', monospace; font-size:10px; color: var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
+  .stat-card .stat-value{ font-family:'Fraunces', serif; font-size:22px; margin-top:4px; }
+
+  .entry-list{ display:flex; flex-direction:column; gap:10px; overflow-y:auto; flex:1; }
+  .entry{ background: var(--surface-raised); border-radius:10px; padding:12px 14px; }
+  .entry-date{ font-family:'Space Mono', monospace; font-size:11px; color: var(--text-muted); margin-bottom:6px; display:block; }
+  .entry-text{ font-size:14px; margin-bottom:4px; }
+  .entry-felt{ font-size:13px; color: var(--text-muted); }
+  .empty-note{ text-align:center; color: var(--text-muted); font-size:14px; margin-top:40px; }
+
+  @media (max-width:400px){ .app{ padding:24px 18px 20px; } h1{ font-size:23px; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="top-links">
+    <button class="top-link" data-nav="log-history">history</button>
+    <button class="top-link" data-nav="home">start over</button>
+  </div>
+
+  <div class="screens">
+
+    <div class="screen active" id="s-home">
+      <p class="eyebrow">Right now</p>
+      <h1>Something good just happened.</h1>
+      <p class="muted">A kiss, a look, a moment that felt easy. Catch it after it happens — not mid-moment. This is evidence for later, not homework for now.</p>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" data-nav="log">Log it</button>
+    </div>
+
+    <div class="screen" id="s-log">
+      <p class="eyebrow">Good moment</p>
+      <h1>What happened?</h1>
+      <div class="log-field"><label>What happened, plainly</label><textarea id="log-what" placeholder="Type here."></textarea></div>
+      <div class="log-field"><label>How it felt (body or mind)</label><textarea id="log-felt" placeholder="Type here."></textarea></div>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="save-entry">Save it</button>
+    </div>
+
+    <div class="screen" id="s-done">
+      <div class="done-mark">&#10003;</div>
+      <h1 style="text-align:center;">Kept.</h1>
+      <p class="muted" style="text-align:center;">That one's on record now — real, dated, plain. Something to come back to on the days the Alarm's louder than the evidence.</p>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" data-nav="home">Log another</button>
+    </div>
+
+    <div class="screen" id="s-log-history">
+      <p class="eyebrow">History</p>
+      <h1>The record</h1>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-label">Total kept</div><div class="stat-value" id="stat-total">0</div></div>
+        <div class="stat-card"><div class="stat-label">This week</div><div class="stat-value" id="stat-week">0</div></div>
+      </div>
+      <div class="entry-list" id="entry-list"></div>
+      <div class="spacer"></div>
+      <button class="btn btn-secondary" data-nav="home">Back</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function nav(screen){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`s-${screen}`).classList.add('active');
+  if(screen === 'log-history') renderHistory();
+}
+
+document.querySelectorAll('[data-nav]').forEach(el => {
+  el.addEventListener('click', () => nav(el.dataset.nav));
+});
+
+document.getElementById('save-entry').addEventListener('click', () => {
+  const what = document.getElementById('log-what').value;
+  const felt = document.getElementById('log-felt').value;
+  const entries = JSON.parse(localStorage.getItem('keep-entries') || '[]');
+  entries.push({
+    date: new Date().toISOString(),
+    what: what,
+    felt: felt
+  });
+  localStorage.setItem('keep-entries', JSON.stringify(entries));
+  document.getElementById('log-what').value = '';
+  document.getElementById('log-felt').value = '';
+  nav('done');
+});
+
+function getEntries(){
+  return JSON.parse(localStorage.getItem('keep-entries') || '[]').sort((a,b) => new Date(b.date) - new Date(a.date));
+}
+
+function renderHistory(){
+  const entries = getEntries();
+  document.getElementById('stat-total').textContent = entries.length;
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+  const weekCount = entries.filter(e => new Date(e.date) >= weekAgo).length;
+  document.getElementById('stat-week').textContent = weekCount;
+
+  const list = document.getElementById('entry-list');
+  list.innerHTML = '';
+  if(entries.length === 0){
+    list.innerHTML = '<p class="empty-note">Nothing kept yet.</p>';
+    return;
+  }
+  entries.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'entry';
+    const dateStr = new Date(e.date).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+    div.innerHTML = `
+      <span class="entry-date">${dateStr}</span>
+      <div class="entry-text">${(e.what || '').slice(0,150)}</div>
+      ${e.felt ? `<div class="entry-felt">${e.felt.slice(0,120)}</div>` : ''}
+    `;
+    list.appendChild(div);
+  });
+}
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+
+</body>
+</html>
