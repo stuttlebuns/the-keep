@@ -103,6 +103,19 @@
     border:1px solid var(--gold); border-radius:999px; padding:2px 8px;
   }
 
+  .chip.add-chip{ border-style:dashed; color: var(--text-muted); }
+  .chip-input-row{ display:none; gap:8px; margin-top:8px; }
+  .chip-input-row.active{ display:flex; }
+  .chip-input-row input{
+    flex:1; background: var(--surface-raised); border:1px solid var(--line); border-radius:999px;
+    color: var(--text); font-family:'Inter', sans-serif; font-size:13px; padding:8px 14px;
+  }
+  .chip-input-row input:focus{ outline:none; border-color: var(--gold); }
+  .chip-input-row button{
+    font-family:'Inter', sans-serif; font-size:13px; font-weight:600;
+    background: var(--gold); color:#20180B; border:none; border-radius:999px; padding:8px 16px; cursor:pointer;
+  }
+
   .done-mark{
     font-family:'Fraunces', serif; font-size:48px; text-align:center; color: var(--gold);
     margin: 12px 0 4px;
@@ -148,13 +161,10 @@
       <div class="log-field"><label>How it felt (body or mind)</label><textarea id="log-felt" placeholder="Type here."></textarea></div>
       <div class="log-field">
         <label>What kind of moment (pick any that fit)</label>
-        <div class="chip-row" id="chip-row">
-          <button class="chip" data-tag="initiated">Initiated contact</button>
-          <button class="chip" data-tag="affection">Physical affection</button>
-          <button class="chip" data-tag="kind">Said something kind</button>
-          <button class="chip" data-tag="easy">Easy conversation</button>
-          <button class="chip" data-tag="playful">Playfulness</button>
-          <button class="chip" data-tag="chose">Chose me</button>
+        <div class="chip-row" id="chip-row"></div>
+        <div class="chip-input-row" id="chip-input-row">
+          <input type="text" id="new-tag-input" placeholder="Name a new tag" maxlength="30">
+          <button id="confirm-new-tag">Add</button>
         </div>
       </div>
       <div class="spacer"></div>
@@ -185,29 +195,82 @@
 </div>
 
 <script>
-const TAG_LABELS = {
-  initiated: 'Initiated contact',
-  affection: 'Physical affection',
-  kind: 'Said something kind',
-  easy: 'Easy conversation',
-  playful: 'Playfulness',
-  chose: 'Chose me'
-};
+const DEFAULT_TAGS = [
+  { id: 'initiated', label: 'Initiated contact' },
+  { id: 'affection', label: 'Physical affection' },
+  { id: 'kind', label: 'Said something kind' },
+  { id: 'easy', label: 'Easy conversation' },
+  { id: 'playful', label: 'Playfulness' },
+  { id: 'chose', label: 'Chose me' }
+];
 
 let selectedTags = [];
+let TAG_LABELS = {};
 
-document.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    const tag = chip.dataset.tag;
-    if(selectedTags.includes(tag)){
-      selectedTags = selectedTags.filter(t => t !== tag);
-      chip.classList.remove('selected');
-    } else {
-      selectedTags.push(tag);
-      chip.classList.add('selected');
-    }
+function getCustomTags(){
+  return JSON.parse(localStorage.getItem('keep-custom-tags') || '[]');
+}
+
+function slugify(str){
+  const base = str.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  return base || ('tag-' + Date.now());
+}
+
+function renderChips(){
+  const allTags = DEFAULT_TAGS.concat(getCustomTags());
+  TAG_LABELS = {};
+  allTags.forEach(t => TAG_LABELS[t.id] = t.label);
+
+  const row = document.getElementById('chip-row');
+  row.innerHTML = '';
+  allTags.forEach(t => {
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (selectedTags.includes(t.id) ? ' selected' : '');
+    chip.textContent = t.label;
+    chip.dataset.tag = t.id;
+    chip.addEventListener('click', () => {
+      if(selectedTags.includes(t.id)){
+        selectedTags = selectedTags.filter(x => x !== t.id);
+      } else {
+        selectedTags.push(t.id);
+      }
+      renderChips();
+    });
+    row.appendChild(chip);
   });
+
+  const addChip = document.createElement('button');
+  addChip.className = 'chip add-chip';
+  addChip.textContent = '+ Add tag';
+  addChip.addEventListener('click', () => {
+    document.getElementById('chip-input-row').classList.add('active');
+    document.getElementById('new-tag-input').focus();
+  });
+  row.appendChild(addChip);
+}
+
+function addCustomTag(){
+  const input = document.getElementById('new-tag-input');
+  const label = input.value.trim();
+  if(!label) return;
+  const id = slugify(label);
+  const custom = getCustomTags();
+  if(!custom.some(t => t.id === id) && !DEFAULT_TAGS.some(t => t.id === id)){
+    custom.push({ id, label });
+    localStorage.setItem('keep-custom-tags', JSON.stringify(custom));
+  }
+  if(!selectedTags.includes(id)) selectedTags.push(id);
+  input.value = '';
+  document.getElementById('chip-input-row').classList.remove('active');
+  renderChips();
+}
+
+document.getElementById('confirm-new-tag').addEventListener('click', addCustomTag);
+document.getElementById('new-tag-input').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); addCustomTag(); }
 });
+
+renderChips();
 
 function nav(screen){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -233,7 +296,7 @@ document.getElementById('save-entry').addEventListener('click', () => {
   document.getElementById('log-what').value = '';
   document.getElementById('log-felt').value = '';
   selectedTags = [];
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  renderChips();
   nav('done');
 });
 
