@@ -89,6 +89,20 @@
   .log-field{ margin-bottom:16px; }
   .log-field label{ display:block; font-family:'Space Mono', monospace; font-size:11px; letter-spacing:0.06em; text-transform:uppercase; color: var(--text-muted); margin-bottom:6px; }
 
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .chip{
+    font-family:'Inter', sans-serif; font-size:13px; font-weight:500;
+    background: var(--surface-raised); border:1px solid var(--line); color: var(--text);
+    border-radius:999px; padding:8px 14px; cursor:pointer;
+  }
+  .chip.selected{ background: var(--gold); border-color: var(--gold); color:#20180B; }
+
+  .entry-tags{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .entry-tag{
+    font-family:'Space Mono', monospace; font-size:10px; color: var(--gold);
+    border:1px solid var(--gold); border-radius:999px; padding:2px 8px;
+  }
+
   .done-mark{
     font-family:'Fraunces', serif; font-size:48px; text-align:center; color: var(--gold);
     margin: 12px 0 4px;
@@ -132,6 +146,17 @@
       <h1>What happened?</h1>
       <div class="log-field"><label>What happened, plainly</label><textarea id="log-what" placeholder="Type here."></textarea></div>
       <div class="log-field"><label>How it felt (body or mind)</label><textarea id="log-felt" placeholder="Type here."></textarea></div>
+      <div class="log-field">
+        <label>What kind of moment (pick any that fit)</label>
+        <div class="chip-row" id="chip-row">
+          <button class="chip" data-tag="initiated">Initiated contact</button>
+          <button class="chip" data-tag="affection">Physical affection</button>
+          <button class="chip" data-tag="kind">Said something kind</button>
+          <button class="chip" data-tag="easy">Easy conversation</button>
+          <button class="chip" data-tag="playful">Playfulness</button>
+          <button class="chip" data-tag="chose">Chose me</button>
+        </div>
+      </div>
       <div class="spacer"></div>
       <button class="btn btn-primary" id="save-entry">Save it</button>
     </div>
@@ -160,6 +185,30 @@
 </div>
 
 <script>
+const TAG_LABELS = {
+  initiated: 'Initiated contact',
+  affection: 'Physical affection',
+  kind: 'Said something kind',
+  easy: 'Easy conversation',
+  playful: 'Playfulness',
+  chose: 'Chose me'
+};
+
+let selectedTags = [];
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const tag = chip.dataset.tag;
+    if(selectedTags.includes(tag)){
+      selectedTags = selectedTags.filter(t => t !== tag);
+      chip.classList.remove('selected');
+    } else {
+      selectedTags.push(tag);
+      chip.classList.add('selected');
+    }
+  });
+});
+
 function nav(screen){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(`s-${screen}`).classList.add('active');
@@ -177,11 +226,14 @@ document.getElementById('save-entry').addEventListener('click', () => {
   entries.push({
     date: new Date().toISOString(),
     what: what,
-    felt: felt
+    felt: felt,
+    tags: selectedTags
   });
   localStorage.setItem('keep-entries', JSON.stringify(entries));
   document.getElementById('log-what').value = '';
   document.getElementById('log-felt').value = '';
+  selectedTags = [];
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
   nav('done');
 });
 
@@ -210,6 +262,7 @@ function renderHistory(){
       <span class="entry-date">${dateStr}</span>
       <div class="entry-text">${(e.what || '').slice(0,150)}</div>
       ${e.felt ? `<div class="entry-felt">${e.felt.slice(0,120)}</div>` : ''}
+      ${e.tags && e.tags.length ? `<div class="entry-tags">${e.tags.map(t => `<span class="entry-tag">${TAG_LABELS[t] || t}</span>`).join('')}</div>` : ''}
     `;
     list.appendChild(div);
   });
