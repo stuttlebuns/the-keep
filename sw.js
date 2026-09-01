@@ -1,4 +1,4 @@
-const CACHE_NAME = 'the-keep-v9';
+const CACHE_NAME = 'the-keep-v10';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', event => {
